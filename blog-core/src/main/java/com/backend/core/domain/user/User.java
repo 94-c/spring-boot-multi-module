@@ -1,5 +1,6 @@
 package com.backend.core.domain.user;
 
+import com.backend.core.domain.user.data.UserCreateData;
 import com.backend.core.domain.user.type.UserGenderType;
 import com.backend.core.domain.user.type.UserSocialType;
 import com.backend.core.support.domain.BaseEntity;
@@ -43,5 +44,20 @@ public class User extends BaseEntity {
             joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
     private Set<Role> roles = new HashSet<>();
+
+    public User(String email, String password, String nickname, UserGenderType gender, UserSocialType social, Double weight, Double height, Set<Role> roles) {
+        this.email = email;
+        this.password = password;
+        this.nickname = nickname;
+        this.gender = gender;
+        this.social = social;
+        this.weight = weight;
+        this.height = height;
+        this.roles = roles;
+    }
+
+    public static User fromCreateData(UserCreateData data, String encodedPassword) {
+       return new User(data.getEmail(), encodedPassword, data.getNickname(), data.getGender(), data.getSocial(), data.getWeight(), data.getHeight(), data.getRoles());
+    }
 
 }
