@@ -1,3 +1,4 @@
+# 기존 설정
 .idea
 .gradle
 build/
@@ -42,3 +43,5 @@ bin/
 ### Mac OS ###
 .DS_Store
 
+# config 폴더의 모든 파일 무시
+config/**/*
