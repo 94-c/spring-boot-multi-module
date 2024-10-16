@@ -46,7 +46,7 @@ subprojects {
 project(':blog-api') {
     dependencies {
         implementation project(':blog-core')
-        compileOnly project(':blog-common')
+        implementation project(':blog-common')
     }
 }
 
@@ -54,6 +54,6 @@ project(':blog-core') {
     bootJar { enabled = false }
     jar { enabled = true }
     dependencies {
-        compileOnly project(':blog-common')
+        implementation project(':blog-common')
     }
 }
