@@ -1,6 +1,6 @@
 package com.backend.api.config.client;
 
-import com.backend.api.config.client.dto.SocialUserInfoData;
+import com.backend.core.domain.user.data.SocialUserInfoData;
 import com.backend.core.domain.user.type.UserSocialType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;

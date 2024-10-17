@@ -9,5 +9,5 @@ spring:
     hibernate:
       ddl-auto: create
 server:
-  port: 9081
+  port: 9082
 
