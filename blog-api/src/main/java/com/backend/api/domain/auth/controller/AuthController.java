@@ -25,11 +25,16 @@ public class AuthController {
 
     @GetMapping("/{provider}")
     public ResponseEntity<Void> login(@PathVariable("provider") String provider, HttpServletResponse response) throws IOException {
-        String authUrl = authService.getAuthUrl(provider);
-        response.sendRedirect(authUrl);
-        return ResponseEntity.ok().build();
-    }
+        String authUrl;
+        try {
+            authUrl = authService.getAuthUrl(provider);  // AuthService에서 provider에 따라 인증 URL 생성
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();  // 지원하지 않는 provider일 경우 400 Bad Request 반환
+        }
 
+        response.sendRedirect(authUrl);  // 인증 URL로 리다이렉트
+        return ResponseEntity.status(HttpServletResponse.SC_FOUND).build();  // 302 리다이렉트 응답 반환
+    }
 
     @PostMapping("/social-login")
     public ResponseEntity<SuccessResponse<LoginResponse>> socialLogin(@RequestBody SocialLoginRequest request) {

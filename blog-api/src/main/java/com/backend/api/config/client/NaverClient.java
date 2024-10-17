@@ -2,28 +2,37 @@ package com.backend.api.config.client;
 
 import com.backend.core.domain.user.data.SocialUserInfoData;
 import com.backend.core.domain.user.type.UserSocialType;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.Objects;
 
 @Component
 public class NaverClient implements SocialClient {
+
     private final String clientId;
     private final String redirectUri;
     private final String clientSecret;
+    private final RestTemplate restTemplate;
 
-    public NaverClient(@Value("${spring.naver.client_id}") String clientId,
-                       @Value("${spring.naver.redirect_uri}") String redirectUri,
-                       @Value("${spring.naver.client_secret}") String clientSecret) {
+    public NaverClient(
+            @Value("${spring.naver.client_id}") String clientId,
+            @Value("${spring.naver.redirect_uri}") String redirectUri,
+            @Value("${spring.naver.client_secret}") String clientSecret,
+            RestTemplate restTemplate) {
         this.clientId = clientId;
         this.redirectUri = redirectUri;
         this.clientSecret = clientSecret;
+        this.restTemplate = restTemplate;
     }
 
     /**
@@ -36,69 +45,53 @@ public class NaverClient implements SocialClient {
                 clientId, redirectUri);
     }
 
-
-    @Override
-    public String getAccessToken(String code, String state) {
-        throw new UnsupportedOperationException("네이버는 state를 지원하지 않습니다.");
-    }
-
     /**
      * 인가 코드를 받아서 access_token을 반환
-     * @param code
+     * @param code 인가 코드
      * @return access_token
-     * @throws JsonProcessingException
      */
     @Override
-    public String getAccessToken(String code) throws JsonProcessingException {
-        WebClient webClient = WebClient.builder()
-                .baseUrl("https://nid.naver.com")
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded;charset=utf-8")
-                .build();
+    public String getAccessToken(String code) {
+        String reqUrl = "https://nid.naver.com/oauth2.0/token";
+        HttpHeaders httpHeaders = new HttpHeaders();
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("grant_type", "authorization_code");
+        params.add("client_id", clientId);
+        params.add("client_secret", clientSecret);
+        params.add("code", code);
+        params.add("redirect_uri", redirectUri);
 
-        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-        body.add("grant_type", "authorization_code");
-        body.add("client_id", clientId);
-        body.add("redirect_uri", redirectUri);
-        body.add("code", code);
-        body.add("client_secret", clientSecret);
+        HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(params, httpHeaders);
+        ResponseEntity<String> response = restTemplate.exchange(reqUrl, HttpMethod.POST, tokenRequest, String.class);
 
-        String responseBody = webClient.post()
-                .uri("/oauth2.0/token")
-                .bodyValue(body)
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
+        JsonObject asJsonObject = JsonParser
+                .parseString(Objects.requireNonNull(response.getBody()))
+                .getAsJsonObject();
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode jsonNode = objectMapper.readTree(responseBody);
-
-        return jsonNode.get("access_token").asText();
+        return asJsonObject.get("access_token").getAsString();
     }
 
     /**
      * accessToken을 사용하여 Naver 사용자 정보를 조회하여 반환
-     * @param accessToken
+     * @param accessToken 액세스 토큰
      * @return SocialUserInfoData
-     * @throws JsonProcessingException
      */
     @Override
-    public SocialUserInfoData getUserInfo(String accessToken) throws JsonProcessingException {
-        WebClient webClient = WebClient.builder()
-                .baseUrl("https://openapi.naver.com")
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
-                .build();
+    public SocialUserInfoData getUserInfo(String accessToken) {
+        String reqUrl = "https://openapi.naver.com/v1/nid/me";
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("Authorization", "Bearer " + accessToken);
 
-        String responseBody = webClient.get()
-                .uri("/v1/nid/me")
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
+        HttpEntity<MultiValueMap<String, String>> memberInfoRequest = new HttpEntity<>(httpHeaders);
+        ResponseEntity<String> response = restTemplate.exchange(reqUrl, HttpMethod.GET, memberInfoRequest, String.class);
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode jsonNode = objectMapper.readTree(responseBody);
+        JsonObject jsonObject = JsonParser
+                .parseString(Objects.requireNonNull(response.getBody()))
+                .getAsJsonObject();
+        JsonObject responseObject = jsonObject.getAsJsonObject("response");
 
-        String email = jsonNode.get("response").get("email").asText();
-        String providerId = jsonNode.get("response").get("id").asText();
+        String email = responseObject.get("email").getAsString();
+        String providerId = responseObject.get("id").getAsString();
 
         return SocialUserInfoData.create(email, providerId, UserSocialType.NAVER);
     }

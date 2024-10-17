@@ -42,7 +42,6 @@ public class KakaoClient implements SocialClient {
     /**
      * 카카오는 state 파라미터를 지원하지 않으므로 해당 메서드는 지원되지 않음
      */
-    @Override
     public String getAccessToken(String code, String state) {
         throw new UnsupportedOperationException("카카오는 state를 지원하지 않습니다.");
     }

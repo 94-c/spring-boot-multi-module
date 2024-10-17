@@ -36,7 +36,6 @@ public class GoogleClient implements SocialClient {
                 clientId, redirectUri);
     }
 
-    @Override
     public String getAccessToken(String code, String state) {
         throw new UnsupportedOperationException("구글은 state를 지원하지 않습니다.");
     }
