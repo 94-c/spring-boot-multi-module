@@ -7,44 +7,38 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 @Component
-public class KakaoClient implements SocialClient {
+public class GoogleClient implements SocialClient {
     private final String clientId;
     private final String redirectUri;
     private final String clientSecret;
 
-    public KakaoClient(@Value("${spring.kakao.client_id}") String clientId,
-                       @Value("${spring.kakao.redirect_uri}") String redirectUri,
-                       @Value("${spring.kakao.client_secret}") String clientSecret) {
+    public GoogleClient(@Value("${spring.google.client_id}") String clientId,
+                        @Value("${spring.google.redirect_uri}") String redirectUri,
+                        @Value("${spring.google.client_secret}") String clientSecret) {
         this.clientId = clientId;
         this.redirectUri = redirectUri;
         this.clientSecret = clientSecret;
     }
 
     /**
-     * 카카오 인증 URL을 반환
-     * @return 카카오 소셜 로그인 URL
+     * Google 인증 URL을 반환
+     * @return Google 소셜 로그인 URL
      */
     public String getAuthUrl() {
         return String.format(
-                "https://kauth.kakao.com/oauth/authorize?client_id=%s&redirect_uri=%s&response_type=code",
+                "https://accounts.google.com/o/oauth2/v2/auth?client_id=%s&redirect_uri=%s&response_type=code&scope=email profile",
                 clientId, redirectUri);
     }
 
-
-    /**
-     * 카카오는 state 파라미터를 지원하지 않으므로 해당 메서드는 지원되지 않음
-     */
     @Override
     public String getAccessToken(String code, String state) {
-        throw new UnsupportedOperationException("카카오는 state를 지원하지 않습니다.");
+        throw new UnsupportedOperationException("구글은 state를 지원하지 않습니다.");
     }
 
     /**
@@ -56,9 +50,8 @@ public class KakaoClient implements SocialClient {
     @Override
     public String getAccessToken(String code) throws JsonProcessingException {
         WebClient webClient = WebClient.builder()
-                .baseUrl("https://kauth.kakao.com")
-                .defaultHeader(HttpHeaders.CONTENT_TYPE,
-                        "application/x-www-form-urlencoded;charset=utf-8")
+                .baseUrl("https://oauth2.googleapis.com")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, "application/x-www-form-urlencoded;charset=utf-8")
                 .build();
 
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
@@ -69,13 +62,9 @@ public class KakaoClient implements SocialClient {
         body.add("client_secret", clientSecret);
 
         String responseBody = webClient.post()
-                .uri("/oauth/token")
+                .uri("/token")
                 .bodyValue(body)
                 .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, clientResponse ->
-                        Mono.error(new RuntimeException("Invalid request")))
-                .onStatus(HttpStatusCode::is5xxServerError, clientResponse ->
-                        Mono.error(new RuntimeException("Server error")))
                 .bodyToMono(String.class)
                 .block();
 
@@ -86,7 +75,7 @@ public class KakaoClient implements SocialClient {
     }
 
     /**
-     * accessToken을 사용하여 카카오 사용자 정보를 조회하여 반환
+     * accessToken을 사용하여 Google 사용자 정보를 조회하여 반환
      * @param accessToken
      * @return SocialUserInfoData
      * @throws JsonProcessingException
@@ -94,28 +83,22 @@ public class KakaoClient implements SocialClient {
     @Override
     public SocialUserInfoData getUserInfo(String accessToken) throws JsonProcessingException {
         WebClient webClient = WebClient.builder()
-                .baseUrl("https://kapi.kakao.com")
+                .baseUrl("https://www.googleapis.com")
                 .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
-                .defaultHeader(HttpHeaders.CONTENT_TYPE,
-                        "application/x-www-form-urlencoded;charset=utf-8")
                 .build();
 
         String responseBody = webClient.get()
-                .uri("/v2/user/me")
+                .uri("/oauth2/v2/userinfo")
                 .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, clientResponse ->
-                        Mono.error(new RuntimeException("Invalid request")))
-                .onStatus(HttpStatusCode::is5xxServerError, clientResponse ->
-                        Mono.error(new RuntimeException("Server error")))
                 .bodyToMono(String.class)
                 .block();
 
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jsonNode = objectMapper.readTree(responseBody);
 
-        String email = jsonNode.get("kakao_account").get("email").asText();
+        String email = jsonNode.get("email").asText();
         String providerId = jsonNode.get("id").asText();
 
-        return SocialUserInfoData.create(email, providerId, UserSocialType.KAKAO);
+        return SocialUserInfoData.create(email, providerId, UserSocialType.GOOGLE);
     }
 }

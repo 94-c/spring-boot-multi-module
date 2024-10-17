@@ -1,5 +1,8 @@
 package com.backend.api.domain.auth.service;
 
+import com.backend.api.config.client.GoogleClient;
+import com.backend.api.config.client.KakaoClient;
+import com.backend.api.config.client.NaverClient;
 import com.backend.core.domain.user.data.SocialUserInfoData;
 import com.backend.api.domain.auth.dto.request.CreateUserRequest;
 import com.backend.api.domain.auth.jwt.JwtTokenProvider;
@@ -13,9 +16,30 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+    private final KakaoClient kakaoClient;
+    private final NaverClient naverClient;
+    private final GoogleClient googleClient;
     private final JwtTokenProvider jwtTokenProvider;
     private final UserCreator userCreator;
     private final UserFinder userFinder;
+
+    /**
+     * provider에 따른 인증 URL을 생성하여 반환
+     * @param provider 소셜 로그인 제공자 (kakao, naver, google)
+     * @return 인증 URL
+     */
+    public String getAuthUrl(String provider) {
+        switch (provider.toLowerCase()) {
+            case "kakao":
+                return kakaoClient.getAuthUrl();
+            case "naver":
+                return naverClient.getAuthUrl();
+            case "google":
+                return googleClient.getAuthUrl();
+            default:
+                throw new IllegalArgumentException("지원하지 않는 소셜 로그인 제공자입니다: " + provider);
+        }
+    }
 
     /**
      * 회원가입 처리 (소셜 로그인 정보를 포함한 추가 정보를 통해 가입)
@@ -81,4 +105,5 @@ public class AuthService {
                 request.getRoles()
         );
     }
+
 }

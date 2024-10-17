@@ -8,19 +8,28 @@ import com.backend.common.response.SuccessResponse;
 import com.backend.common.response.code.SuccessCode;
 import com.backend.core.domain.user.User;
 import com.backend.core.domain.user.data.SocialUserInfoData;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
+
+    @GetMapping("/{provider}")
+    public ResponseEntity<Void> login(@PathVariable("provider") String provider, HttpServletResponse response) throws IOException {
+        String authUrl = authService.getAuthUrl(provider);
+        response.sendRedirect(authUrl);
+        return ResponseEntity.ok().build();
+    }
+
 
     @PostMapping("/social-login")
     public ResponseEntity<SuccessResponse<LoginResponse>> socialLogin(@RequestBody SocialLoginRequest request) {
