@@ -21,9 +21,6 @@ public class User extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
-    private String password;
-
     @Column(name = "nick_name", nullable = false)
     private String nickname;
 
@@ -45,9 +42,8 @@ public class User extends BaseEntity {
             inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
     private Set<Role> roles = new HashSet<>();
 
-    public User(String email, String password, String nickname, UserGenderType gender, UserSocialType social, Double weight, Double height, Set<Role> roles) {
+    public User(String email, String nickname, UserGenderType gender, UserSocialType social, Double weight, Double height, Set<Role> roles) {
         this.email = email;
-        this.password = password;
         this.nickname = nickname;
         this.gender = gender;
         this.social = social;
@@ -56,8 +52,8 @@ public class User extends BaseEntity {
         this.roles = roles;
     }
 
-    public static User fromCreateData(UserCreateData data, String encodedPassword) {
-       return new User(data.getEmail(), encodedPassword, data.getNickname(), data.getGender(), data.getSocial(), data.getWeight(), data.getHeight(), data.getRoles());
+    public static User fromCreateData(UserCreateData data) {
+       return new User(data.getEmail(), data.getNickname(), data.getGender(), data.getSocial(), data.getWeight(), data.getHeight(), data.getRoles());
     }
 
 }

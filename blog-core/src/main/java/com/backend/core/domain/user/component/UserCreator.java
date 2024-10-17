@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class UserCreator {
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
 
     public Long createUser(UserCreateData data) {
         boolean result = userRepository.existsByEmail(data.getEmail());
@@ -21,8 +20,7 @@ public class UserCreator {
             throw new UserEmailDuplicationException(HttpStatus.NOT_FOUND, "중복되는 이메일이 존재합니다.");
         }
 
-        String encodedPassword = passwordEncoder.encode(data.getPassword());
-        User user = User.fromCreateData(data, encodedPassword);
+        User user = User.fromCreateData(data);
 
         return userRepository.save(user).getId();
     }

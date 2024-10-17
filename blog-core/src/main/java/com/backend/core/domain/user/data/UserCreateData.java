@@ -10,7 +10,6 @@ import java.util.Set;
 @Getter
 public class UserCreateData {
     private final String email;
-    private final String password;
     private final String nickname;
     private final UserGenderType gender;
     private final UserSocialType social;
@@ -18,9 +17,8 @@ public class UserCreateData {
     private final Double height;
     private final Set<Role> roles;
 
-    public UserCreateData(String email, String password, String nickname, UserGenderType gender, UserSocialType social, Double weight, Double height, Set<Role> roles) {
+    public UserCreateData(String email, String nickname, UserGenderType gender, UserSocialType social, Double weight, Double height, Set<Role> roles) {
         this.email = email;
-        this.password = password;
         this.nickname = nickname;
         this.gender = gender;
         this.social = social;
