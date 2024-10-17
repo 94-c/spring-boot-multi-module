@@ -1,4 +1,4 @@
-package com.backend.api.config.client.dto;
+package com.backend.core.domain.user.data;
 
 import com.backend.core.domain.user.type.UserSocialType;
 import lombok.Getter;

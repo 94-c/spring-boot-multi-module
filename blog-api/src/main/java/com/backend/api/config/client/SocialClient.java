@@ -1,6 +1,6 @@
 package com.backend.api.config.client;
 
-import com.backend.api.config.client.dto.SocialUserInfoData;
+import com.backend.core.domain.user.data.SocialUserInfoData;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 public interface SocialClient {
