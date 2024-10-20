@@ -15,6 +15,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Objects;
+import java.util.UUID;
 
 @Component
 public class NaverClient implements SocialClient {
@@ -40,9 +41,10 @@ public class NaverClient implements SocialClient {
      * @return Naver 소셜 로그인 URL
      */
     public String getAuthUrl() {
+        String state = UUID.randomUUID().toString();  // 임의의 문자열을 state로 설정
         return String.format(
                 "https://nid.naver.com/oauth2.0/authorize?client_id=%s&redirect_uri=%s&response_type=code",
-                clientId, redirectUri);
+                clientId, redirectUri, state);
     }
 
     /**
@@ -52,6 +54,8 @@ public class NaverClient implements SocialClient {
      */
     @Override
     public String getAccessToken(String code) {
+        String state = UUID.randomUUID().toString();
+
         String reqUrl = "https://nid.naver.com/oauth2.0/token";
         HttpHeaders httpHeaders = new HttpHeaders();
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -60,6 +64,7 @@ public class NaverClient implements SocialClient {
         params.add("client_secret", clientSecret);
         params.add("code", code);
         params.add("redirect_uri", redirectUri);
+        params.add("state", state);
 
         HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(params, httpHeaders);
         ResponseEntity<String> response = restTemplate.exchange(reqUrl, HttpMethod.POST, tokenRequest, String.class);

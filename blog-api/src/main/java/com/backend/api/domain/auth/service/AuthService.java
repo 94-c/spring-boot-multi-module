@@ -10,7 +10,6 @@ import com.backend.core.domain.user.User;
 import com.backend.core.domain.user.component.UserCreator;
 import com.backend.core.domain.user.component.UserFinder;
 import com.backend.core.domain.user.data.UserCreateData;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
